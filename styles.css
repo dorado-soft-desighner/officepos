@@ -1,0 +1,282 @@
+/* styles.css */
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Animations */
+.fade-in {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+
+.fade-in.active-view {
+    opacity: 1;
+}
+
+/* Nav Button Active State */
+.nav-btn.active {
+    background-color: #1e293b; /* slate-800 */
+    border-left: 4px solid #4f46e5; /* primary border */
+    color: white;
+}
+
+.nav-btn.active i {
+    color: #4f46e5;
+}
+
+/* Product Card Hover Effect */
+.product-card {
+    transition: all 0.2s ease-in-out;
+}
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Receipt Print Styles */
+@media print {
+    body {
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+    
+    #login-container, #app-container {
+        display: none !important;
+    }
+    
+    #receipt-print-area, #receipt-print-area * {
+        visibility: visible;
+    }
+    
+    #receipt-print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm; /* Standard thermal receipt width */
+        font-family: 'Courier New', Courier, monospace; /* Monospace is best for thermal */
+        color: black;
+        margin: 0;
+        padding: 5mm;
+        display: block !important;
+    }
+
+    /* A4 Print Modifier for Reports and Wholesale Invoices */
+    #receipt-print-area.a4-print {
+        width: 210mm;
+        min-height: 297mm;
+        font-family: 'Inter', sans-serif;
+        padding: 20mm;
+        box-sizing: border-box;
+        background: white;
+        visibility: visible;
+        display: block !important;
+    }
+
+    #receipt-print-area.a4-print .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 40px;
+        border-bottom: 2px solid #4f46e5;
+        padding-bottom: 20px;
+    }
+
+    #receipt-print-area.a4-print .invoice-logo {
+        height: 80px;
+        object-contain: contain;
+    }
+
+    #receipt-print-area.a4-print .company-info h1 {
+        font-size: 24pt;
+        color: #4f46e5;
+        margin: 0;
+        font-weight: 800;
+    }
+
+    #receipt-print-area.a4-print .company-info p {
+        margin: 2px 0;
+        font-size: 10pt;
+        color: #64748b;
+    }
+
+    #receipt-print-area.a4-print .invoice-meta {
+        text-align: right;
+    }
+
+    #receipt-print-area.a4-print .invoice-meta h2 {
+        font-size: 28pt;
+        margin: 0;
+        color: #1e293b;
+        font-weight: 300;
+        letter-spacing: -1px;
+    }
+
+    #receipt-print-area.a4-print .billing-info {
+        display: grid;
+        grid-template-cols: 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 40px;
+    }
+
+    #receipt-print-area.a4-print .info-label {
+        font-size: 9pt;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #94a3b8;
+        margin-bottom: 8px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 4px;
+    }
+
+    #receipt-print-area.a4-print .info-value {
+        font-size: 11pt;
+        color: #1e293b;
+        line-height: 1.4;
+    }
+
+    #receipt-print-area.a4-print .invoice-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 40px;
+    }
+
+    #receipt-print-area.a4-print .invoice-table th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 9pt;
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    #receipt-print-area.a4-print .invoice-table td {
+        padding: 15px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 10pt;
+        color: #334155;
+    }
+
+    #receipt-print-area.a4-print .invoice-summary {
+        margin-left: auto;
+        width: 300px;
+    }
+
+    #receipt-print-area.a4-print .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 10pt;
+    }
+
+    #receipt-print-area.a4-print .summary-row.total {
+        border-top: 2px solid #4f46e5;
+        margin-top: 10px;
+        padding-top: 15px;
+        font-size: 14pt;
+        font-weight: 800;
+        color: #4f46e5;
+    }
+
+    #receipt-print-area.a4-print .invoice-footer {
+        margin-top: 60px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+        font-size: 9pt;
+        color: #94a3b8;
+    }
+
+    #receipt-print-area.a4-print .signature-space {
+        margin-top: 40px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #receipt-print-area.a4-print .sig-box {
+        width: 200px;
+        border-top: 1px solid #1e293b;
+        padding-top: 5px;
+        text-align: center;
+        font-size: 9pt;
+        font-weight: 600;
+    }
+
+    /* Thermal print specific resets */
+    @page {
+        margin: 0;
+        size: auto;
+    }
+    
+    .receipt-header {
+        text-align: center;
+        margin-bottom: 10px;
+        border-bottom: 1px dashed black;
+        padding-bottom: 5px;
+    }
+    
+    .receipt-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .receipt-details {
+        font-size: 0.8rem;
+        margin-bottom: 10px;
+    }
+    
+    .receipt-table {
+        width: 100%;
+        font-size: 0.8rem;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
+    
+    .receipt-table th {
+        border-bottom: 1px dashed black;
+        text-align: left;
+    }
+    
+    .receipt-table td {
+        padding: 2px 0;
+    }
+    
+    .receipt-totals {
+        border-top: 1px dashed black;
+        padding-top: 5px;
+        font-size: 0.9rem;
+    }
+    
+    .receipt-footer {
+        text-align: center;
+        font-size: 0.8rem;
+        margin-top: 15px;
+        border-top: 1px dashed black;
+        padding-top: 5px;
+    }
+}
+
+}

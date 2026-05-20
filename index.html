@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dorado Essence | Perfume & Essence Management</title>
+
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        secondary: '#d97706', // Amber 600 (Gold-like)
+                        dark: '#0f172a', // Slate 900
+                        light: '#f8fafc', // Slate 50
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome (via CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SweetAlert2 (via CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Dexie.js (via CDN) -->
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="bg-light text-slate-800 font-sans h-screen overflow-hidden flex relative">
+
+    <!-- Login Screen Container -->
+    <div id="login-container" class="absolute inset-0 z-50 bg-slate-100 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
+            <div class="text-center mb-8">
+                <img src="logo.jpg" alt="Dorado Essence Logo" class="mx-auto h-24 object-contain mb-4">
+                <p class="text-slate-500 mt-2 text-sm">Please log in to continue</p>
+            </div>
+
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Username or Mobile Number</label>
+                    <div class="relative">
+                        <i
+                            class="fa-solid fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="login-identifier" required
+                            class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-slate-50 focus:bg-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                    <div class="relative">
+                        <i
+                            class="fa-solid fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="password" id="login-password" required
+                            class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-slate-50 focus:bg-white">
+                    </div>
+                </div>
+                <button type="submit"
+                    class="w-full py-3 bg-gradient-to-r from-primary to-indigo-600 hover:from-indigo-600 hover:to-primary text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all transform active:scale-95 mt-4">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Container (Hidden initially) -->
+    <div id="app-container" class="w-full h-full flex hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-dark text-white flex flex-col shadow-2xl z-20">
+            <div class="p-4 flex items-center justify-center border-b border-slate-800 bg-white">
+                <img src="logo.jpg" alt="Dorado Essence" class="h-16 object-contain">
+            </div>
+
+            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                <button onclick="switchView('pos-view')"
+                    class="nav-btn active w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-slate-800 text-left">
+                    <i class="fa-solid fa-cash-register w-5 text-center"></i>
+                    <span class="font-medium">Point of Sale</span>
+                </button>
+                <button onclick="switchView('inventory-view')"
+                    class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-slate-800 text-left text-slate-400">
+                    <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
+                    <span class="font-medium">Inventory</span>
+                </button>
+                <button onclick="switchView('raw-materials-view')"
+                    class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-slate-800 text-left text-slate-400">
+                    <i class="fa-solid fa-flask-vial w-5 text-center"></i>
+                    <span class="font-medium">Raw Materials</span>
+                </button>
+                <button onclick="switchView('customers-view')"
+                    class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-slate-800 text-left text-slate-400">
+                    <i class="fa-solid fa-users w-5 text-center"></i>
+                    <span class="font-medium">Customers</span>
+                </button>
+                <button onclick="switchView('purchasing-view')"
+                    class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-slate-800 text-left text-slate-400">
+                    <i class="fa-solid fa-cart-arrow-down w-5 text-center"></i>
+                    <span class="font-medium">Purchasing</span>
+                </button>
+                <button onclick="switchView('reports-view')"
+                    class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-slate-800 text-left text-slate-400">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span class="font-medium">Reports</span>
+                </button>
+                <button id="nav-users" onclick="switchView('users-view')"
+                    class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-slate-800 text-left text-slate-400 hidden">
+                    <i class="fa-solid fa-user-shield w-5 text-center"></i>
+                    <span class="font-medium">Users</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="exportData()"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-sm text-slate-300">
+                    <i class="fa-solid fa-download"></i> Backup Data
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 relative">
+
+            <!-- Header -->
+            <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10">
+                <h2 id="view-title" class="text-xl font-semibold text-slate-800">Point of Sale</h2>
+                <div class="flex items-center gap-6">
+                    <div class="text-sm font-medium text-slate-500" id="current-time">--:--</div>
+                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div class="flex items-center gap-3 relative group">
+                        <div class="text-right hidden md:block">
+                            <div id="header-user-name" class="text-sm font-bold text-slate-800 leading-tight">Admin
+                            </div>
+                            <div id="header-user-role" class="text-xs text-primary font-medium">Administrator</div>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-primary shadow-inner">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+
+                        <!-- Dropdown -->
+                        <div
+                            class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <button onclick="handleLogout()"
+                                class="w-full text-left px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 font-medium rounded-xl flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Views Container -->
+            <div class="flex-1 relative overflow-hidden flex flex-col">
+
+                <!-- POS View -->
+                <section id="pos-view" class="view-section flex-1 flex gap-6 fade-in active-view p-6 overflow-hidden">
+                    <!-- Products Grid -->
+                    <div class="flex-1 flex flex-col h-full">
+                        <!-- Search & Filter -->
+                        <div class="flex gap-4 mb-4">
+                            <div class="relative flex-1">
+                                <i
+                                    class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" id="pos-search" placeholder="Search by name or code..."
+                                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-shadow shadow-sm">
+                            </div>
+                            <select id="pos-category-filter"
+                                class="px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary outline-none shadow-sm bg-white">
+                                <option value="all">All Categories</option>
+                                <option value="Perfume">Perfumes</option>
+                                <option value="Essence">Essences</option>
+                            </select>
+                        </div>
+
+                        <!-- Grid -->
+                        <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                            <div id="pos-product-grid"
+                                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
+                                <!-- Product Cards will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Panel -->
+                    <div
+                        class="w-96 bg-white rounded-2xl shadow-xl flex flex-col h-full border border-slate-100 overflow-hidden">
+                        <div class="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                            <h3 class="font-semibold text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-cart-shopping text-primary"></i> Current Order
+                            </h3>
+                            <span id="cart-count"
+                                class="bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">0</span>
+                        </div>
+
+                        <div class="p-4 border-b border-slate-100">
+                            <div class="flex gap-2 bg-slate-100 p-1 rounded-lg">
+                                <button onclick="setPricingMode('retail')" id="btn-retail"
+                                    class="flex-1 py-1.5 text-sm font-medium rounded-md bg-white shadow-sm text-slate-800 transition-all">Retail</button>
+                                <button onclick="setPricingMode('wholesale01')" id="btn-wholesale01"
+                                    class="flex-1 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-800 transition-all">W.Price 01</button>
+                                <button onclick="setPricingMode('wholesale02')" id="btn-wholesale02"
+                                    class="flex-1 py-1.5 text-sm font-medium rounded-md text-slate-500 hover:text-slate-800 transition-all">W.Price 02</button>
+                            </div>
+
+                            <div class="mt-3 relative" id="customer-select-container" style="display: none;">
+                                <select id="cart-customer"
+                                    class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                                    <option value="">Select Wholesale Customer</option>
+                                    <!-- Customers will be injected here -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Cart Items -->
+                        <div class="flex-1 relative overflow-hidden">
+                            <div id="cart-items" class="absolute inset-0 overflow-y-auto p-4 custom-scrollbar">
+                                <!-- Items injected here -->
+                            </div>
+                            <!-- Empty State -->
+                            <div id="cart-empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-sm bg-white">
+                                <i class="fa-solid fa-basket-shopping text-4xl mb-3 opacity-50"></i>
+                                <p>Cart is empty</p>
+                            </div>
+                        </div>
+
+                        <!-- Cart Totals & Actions -->
+                        <div class="p-4 bg-slate-50 border-t border-slate-100">
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-sm text-slate-500">
+                                    <span>Subtotal</span>
+                                    <span id="cart-subtotal" class="font-medium">Rs. 0.00</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm text-slate-500">
+                                    <span>Discount</span>
+                                    <div class="flex items-center gap-1">
+                                        <input type="number" id="cart-discount" value="0" min="0"
+                                            class="w-16 px-2 py-1 border border-slate-200 rounded text-right outline-none focus:border-primary">
+                                        <span>%</span>
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex justify-between text-lg font-bold text-slate-800 pt-2 border-t border-slate-200 mt-2">
+                                    <span>Total</span>
+                                    <span id="cart-total" class="text-primary">Rs. 0.00</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="clearCart()"
+                                    class="py-3 px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-medium transition-colors">
+                                    Clear
+                                </button>
+                                <button onclick="processCheckout()"
+                                    class="py-3 px-4 bg-gradient-to-r from-primary to-indigo-600 hover:from-indigo-600 hover:to-primary text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all transform active:scale-95">
+                                    Checkout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Inventory View -->
+                <section id="inventory-view" class="view-section flex-1 hidden fade-in flex-col p-6 overflow-hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-700">Inventory Items</h3>
+                            <p class="text-xs text-slate-400" id="inv-count-summary">Loading items...</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="addCategory()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-300 transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-tags"></i> Add Category
+                            </button>
+                            <button onclick="openProductModal()"
+                                class="px-4 py-2 bg-primary text-white rounded-lg shadow-sm hover:bg-indigo-600 transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Add Product
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search & Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div class="relative md:col-span-2">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="inv-search" placeholder="Search by name or code..."
+                                class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none shadow-sm">
+                        </div>
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 flex flex-col justify-center">
+                            <span class="text-[10px] uppercase font-bold text-slate-400">Total Items</span>
+                            <span class="text-sm font-bold text-slate-700" id="inv-stat-items">0</span>
+                        </div>
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 flex flex-col justify-center">
+                            <span class="text-[10px] uppercase font-bold text-slate-400">Low Stock</span>
+                            <span class="text-sm font-bold text-rose-600" id="inv-stat-low">0</span>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                        <div class="overflow-x-auto flex-1 custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-600 text-sm border-b border-slate-200">
+                                        <th class="p-4 font-semibold">Code</th>
+                                        <th class="p-4 font-semibold">Name</th>
+                                        <th class="p-4 font-semibold">Category</th>
+                                        <th class="p-4 font-semibold">Retail Price</th>
+                                        <th class="p-4 font-semibold">Wholesale 01</th>
+                                        <th class="p-4 font-semibold">Wholesale 02</th>
+                                        <th class="p-4 font-semibold">Stock</th>
+                                        <th class="p-4 font-semibold text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-table-body" class="text-sm divide-y divide-slate-100">
+                                    <!-- Inventory rows injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Raw Materials View -->
+                <section id="raw-materials-view" class="view-section flex-1 hidden fade-in flex-col p-6 overflow-hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-700">Raw Material Stock</h3>
+                            <p class="text-xs text-slate-400" id="raw-count-summary">Loading materials...</p>
+                        </div>
+                        <button onclick="openRawMaterialModal()"
+                            class="px-4 py-2 bg-emerald-600 text-white rounded-lg shadow-sm hover:bg-emerald-700 transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Add New
+                        </button>
+                        <button onclick="viewUsageLog()"
+                            class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-300 transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-history"></i> Usage Log
+                        </button>
+                    </div>
+
+                    <!-- Search & Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                        <div class="relative md:col-span-2">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="raw-search" placeholder="Search raw materials..."
+                                class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none shadow-sm">
+                        </div>
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 flex flex-col justify-center">
+                            <span class="text-[10px] uppercase font-bold text-slate-400">Total Types</span>
+                            <span class="text-sm font-bold text-slate-700" id="raw-stat-items">0</span>
+                        </div>
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 flex flex-col justify-center">
+                            <span class="text-[10px] uppercase font-bold text-slate-400">Low Stock</span>
+                            <span class="text-sm font-bold text-rose-600" id="raw-stat-low">0</span>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                        <div class="overflow-x-auto flex-1 custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-600 text-sm border-b border-slate-200">
+                                        <th class="p-4 font-semibold">Material Name</th>
+                                        <th class="p-4 font-semibold">Current Stock</th>
+                                        <th class="p-4 font-semibold">Unit</th>
+                                        <th class="p-4 font-semibold">Min. Level</th>
+                                        <th class="p-4 font-semibold text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="raw-materials-table-body" class="text-sm divide-y divide-slate-100">
+                                    <!-- Rows injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Customers View -->
+                <section id="customers-view" class="view-section flex-1 hidden fade-in flex-col p-6 overflow-hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-slate-700">Wholesale Customers</h3>
+                        <button onclick="openCustomerModal()"
+                            class="px-4 py-2 bg-secondary text-white rounded-lg shadow-sm hover:bg-amber-700 transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i> Add Customer
+                        </button>
+                    </div>
+
+                    <div
+                        class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                        <div class="overflow-x-auto flex-1 custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-600 text-sm border-b border-slate-200">
+                                        <th class="p-4 font-semibold">Name</th>
+                                        <th class="p-4 font-semibold">Contact Info</th>
+                                        <th class="p-4 font-semibold">Total Due (Credit)</th>
+                                        <th class="p-4 font-semibold text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customers-table-body" class="text-sm divide-y divide-slate-100">
+                                    <!-- Customer rows injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Purchasing View -->
+                <section id="purchasing-view" class="view-section flex-1 hidden fade-in flex-col p-6 overflow-hidden">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                        <h3 class="text-lg font-semibold text-slate-700">Purchase Orders</h3>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 px-2">Filter</span>
+                                <input type="date" id="purchasing-filter-start" class="text-xs px-2 py-1 rounded border-none outline-none bg-white">
+                                <span class="text-slate-300">to</span>
+                                <input type="date" id="purchasing-filter-end" class="text-xs px-2 py-1 rounded border-none outline-none bg-white">
+                            </div>
+                            <button onclick="printPurchasingReport()"
+                                class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-300 transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-print"></i> Print Report
+                            </button>
+                            <button onclick="openPOModal()"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> New Purchase Order
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                        <div class="overflow-x-auto flex-1 custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-600 text-sm border-b border-slate-200">
+                                        <th class="p-4 font-semibold">Date & Time</th>
+                                        <th class="p-4 font-semibold">Supplier</th>
+                                        <th class="p-4 font-semibold">Invoice No</th>
+                                        <th class="p-4 font-semibold">Total Amount</th>
+                                        <th class="p-4 font-semibold text-center">Payment</th>
+                                        <th class="p-4 font-semibold text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="purchasing-table-body" class="text-sm divide-y divide-slate-100">
+                                    <!-- PO rows injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reports View -->
+                <section id="reports-view" class="view-section flex-1 hidden fade-in flex-col p-6 overflow-hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-money-bill-trend-up"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">Total Sales</p>
+                                <h4 id="report-total-sales" class="text-2xl font-bold text-slate-800">Rs. 0.00</h4>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">Invoices Count</p>
+                                <h4 id="report-invoice-count" class="text-2xl font-bold text-slate-800">0</h4>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">Low Stock Items</p>
+                                <h4 id="report-low-stock" class="text-2xl font-bold text-slate-800">0</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden p-6">
+                        <h3 class="text-lg font-semibold text-slate-700 mb-4">Recent Transactions</h3>
+                        <div class="overflow-y-auto h-[calc(100%-3rem)] custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-600 text-sm border-b border-slate-200">
+                                        <th class="p-3 font-semibold">Date & Time</th>
+                                        <th class="p-3 font-semibold">Invoice ID</th>
+                                        <th class="p-3 font-semibold">Type</th>
+                                        <th class="p-3 font-semibold">Payment</th>
+                                        <th class="p-3 font-semibold text-right">Total Amount</th>
+                                        <th class="p-3 font-semibold text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactions-table-body" class="text-sm divide-y divide-slate-100">
+                                    <!-- Transaction rows injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users View -->
+                <section id="users-view" class="view-section flex-1 hidden fade-in flex-col p-6 overflow-hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-slate-700">User Management</h3>
+                        <button onclick="openUserModal()"
+                            class="px-4 py-2 bg-primary text-white rounded-lg shadow-sm hover:bg-indigo-600 transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i> Add User
+                        </button>
+                    </div>
+
+                    <div
+                        class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                        <div class="overflow-x-auto flex-1 custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-600 text-sm border-b border-slate-200">
+                                        <th class="p-4 font-semibold">Username</th>
+                                        <th class="p-4 font-semibold">Mobile Number</th>
+                                        <th class="p-4 font-semibold">Role</th>
+                                        <th class="p-4 font-semibold">Status</th>
+                                        <th class="p-4 font-semibold text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body" class="text-sm divide-y divide-slate-100">
+                                    <!-- User rows injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+
+        <!-- Modals -->
+
+        <!-- Add Product Modal -->
+        <div id="product-modal"
+            class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+            <div
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform duration-300">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-xl font-bold text-slate-800" id="product-modal-title">Add New Product</h3>
+                    <button onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600"><i
+                            class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <form id="product-form" class="space-y-4">
+                    <input type="hidden" id="prod-id">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Code</label>
+                            <input type="text" id="prod-code" required
+                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                            <select id="prod-category" required
+                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none"
+                                onchange="updateUnitLabel()">
+                                <option value="Perfume">Perfume</option>
+                                <option value="Essence">Essence</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                        <input type="text" id="prod-name" required
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Retail Price (Rs)</label>
+                            <input type="number" id="prod-retail" min="0" step="0.01" required
+                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Wholesale 01 (Rs)</label>
+                            <input type="number" id="prod-wholesale01" min="0" step="0.01" required
+                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Wholesale 02 (Rs)</label>
+                            <input type="number" id="prod-wholesale02" min="0" step="0.01" required
+                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Stock Quantity</label>
+                            <input type="number" id="prod-stock" min="0" required
+                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Unit</label>
+                            <select id="prod-unit" required
+                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                                <option value="Bottles">Bottles</option>
+                                <option value="Pcs">Pcs</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
+                        <button type="button" onclick="closeProductModal()"
+                            class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-primary hover:bg-indigo-600 text-white rounded-lg transition-colors shadow-sm">Save
+                            Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Raw Material Modal -->
+        <div id="raw-material-modal"
+            class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+            <div
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform duration-300">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-xl font-bold text-slate-800" id="raw-modal-title">Add Raw Material</h3>
+                    <button onclick="closeRawMaterialModal()" class="text-slate-400 hover:text-slate-600"><i
+                            class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <form id="raw-material-form" class="space-y-4">
+                    <input type="hidden" id="raw-id">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Material Name</label>
+                        <input type="text" id="raw-name" required
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Current Stock</label>
+                            <input type="number" id="raw-stock" min="0" step="any" required
+                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Unit</label>
+                            <input type="text" id="raw-unit" required placeholder="e.g., ml, g, pcs"
+                                class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Minimum Stock Level (Alert)</label>
+                        <input type="number" id="raw-min-level" min="0" step="any" required
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
+                        <button type="button" onclick="closeRawMaterialModal()"
+                            class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors shadow-sm">Save
+                            Material</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Reduce Raw Material Modal -->
+        <div id="reduce-raw-modal"
+            class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+            <div
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform duration-300">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-xl font-bold text-slate-800">Record Material Usage</h3>
+                    <button onclick="closeReduceModal()" class="text-slate-400 hover:text-slate-600"><i
+                            class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <form id="reduce-raw-form" class="space-y-4">
+                    <input type="hidden" id="reduce-raw-id">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Material</label>
+                        <input type="text" id="reduce-raw-name-display" readonly
+                            class="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 outline-none font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Taken By (Person Name)</label>
+                        <input type="text" id="reduce-raw-person" required placeholder="Who is taking this?"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Quantity to Reduce</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="reduce-raw-qty" min="0.01" step="any" required
+                                class="flex-1 px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                            <span id="reduce-raw-unit-display" class="text-slate-500 font-medium"></span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1" id="reduce-raw-stock-hint"></p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
+                        <button type="button" onclick="closeReduceModal()"
+                            class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors shadow-sm font-bold">Record Usage</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Increase Raw Material Modal -->
+        <div id="increase-raw-modal"
+            class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+            <div
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform duration-300">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-xl font-bold text-slate-800">Add Stock / Restock</h3>
+                    <button onclick="closeIncreaseModal()" class="text-slate-400 hover:text-slate-600"><i
+                            class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <form id="increase-raw-form" class="space-y-4">
+                    <input type="hidden" id="increase-raw-id">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Material</label>
+                        <input type="text" id="increase-raw-name-display" readonly
+                            class="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 outline-none font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Received By / Note</label>
+                        <input type="text" id="increase-raw-person" required placeholder="Purchased from / Received by"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Quantity to Add</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="increase-raw-qty" min="0.01" step="any" required
+                                class="flex-1 px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                            <span id="increase-raw-unit-display" class="text-slate-500 font-medium"></span>
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
+                        <button type="button" onclick="closeIncreaseModal()"
+                            class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors shadow-sm font-bold">Add Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Usage Log Modal -->
+        <div id="usage-log-modal"
+            class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+            <div
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 transform scale-95 transition-transform duration-300 flex flex-col max-h-[80vh]">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-xl font-bold text-slate-800">Material Usage History</h3>
+                    <button onclick="closeUsageLog()" class="text-slate-400 hover:text-slate-600"><i
+                            class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar border border-slate-100 rounded-xl">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 bg-white shadow-sm">
+                            <tr class="bg-slate-50 text-slate-600 text-xs border-b border-slate-200">
+                                <th class="p-3 font-semibold">Date & Time</th>
+                                <th class="p-3 font-semibold">Material</th>
+                                <th class="p-3 font-semibold">Taken By</th>
+                                <th class="p-3 font-semibold text-right">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usage-log-table-body" class="text-sm divide-y divide-slate-100">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pt-4 border-t border-slate-100 flex justify-end">
+                    <button type="button" onclick="closeUsageLog()"
+                        class="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit User Modal -->
+        <div id="user-modal"
+            class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+            <div
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform duration-300">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-xl font-bold text-slate-800" id="user-modal-title">Add New User</h3>
+                    <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600"><i
+                            class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <form id="user-form" class="space-y-4">
+                    <input type="hidden" id="user-id">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                        <input type="text" id="user-username" required
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Mobile Number</label>
+                        <input type="text" id="user-mobile" required
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                        <input type="password" id="user-password"
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        <p class="text-xs text-slate-500 mt-1" id="user-password-help" style="display: none;">Leave
+                            blank to keep existing password</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                        <select id="user-role" required
+                            class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
+                        <button type="button" onclick="closeUserModal()"
+                            class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-primary hover:bg-indigo-600 text-white rounded-lg transition-colors shadow-sm">Save
+                            User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Purchase Order Modal -->
+        <div id="po-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-xl font-bold text-slate-800">New Purchase Order</h3>
+                    <button onclick="closePOModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                
+                <form id="po-form" class="space-y-4 flex-1 flex flex-col overflow-hidden" onsubmit="savePurchaseOrder(event)">
+                    <!-- Master Data -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 pb-4 border-b border-slate-100">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Purchase Date</label>
+                            <input type="date" id="po-date" required class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Supplier</label>
+                            <input type="text" id="po-supplier" required placeholder="Supplier Name" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Invoice Number</label>
+                            <input type="text" id="po-invoice" required placeholder="Invoice No" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Payment Method</label>
+                            <select id="po-payment-method" required class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                                <option value="Cash">Cash</option>
+                                <option value="Card">Card</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Credit">Credit</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Payment Date</label>
+                            <input type="date" id="po-payment-date" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Item Entry -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex gap-3 items-end">
+                        <div class="flex-1">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Item Name</label>
+                            <input type="text" id="po-item-name" placeholder="E.g., Perfume Bottle 50ml" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div class="w-24">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Qty</label>
+                            <input type="number" id="po-item-qty" min="1" step="any" placeholder="0" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div class="w-32">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Unit Price (Rs)</label>
+                            <input type="number" id="po-item-price" min="0" step="0.01" placeholder="0.00" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <button type="button" onclick="addPOItem()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-lg transition-colors font-medium h-[38px]">Add</button>
+                    </div>
+
+                    <!-- Items List -->
+                    <div class="flex-1 overflow-y-auto border border-slate-200 rounded-xl mt-2 custom-scrollbar min-h-[150px]">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="sticky top-0 bg-white shadow-sm">
+                                <tr class="bg-slate-100 text-slate-600 text-xs border-b border-slate-200">
+                                    <th class="py-2 px-3 font-semibold">Item</th>
+                                    <th class="py-2 px-3 font-semibold text-right">Qty</th>
+                                    <th class="py-2 px-3 font-semibold text-right">Unit Price</th>
+                                    <th class="py-2 px-3 font-semibold text-right">Total</th>
+                                    <th class="py-2 px-3 font-semibold text-center w-12"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="po-items-body" class="text-sm divide-y divide-slate-100 px-3">
+                                <!-- Items injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-4 border-t border-slate-100 mt-auto">
+                        <div class="text-lg font-bold text-slate-800">
+                            Total: <span id="po-total" class="text-primary">Rs. 0.00</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="closePOModal()" class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancel</button>
+                            <button type="submit" class="px-5 py-2 bg-primary hover:bg-indigo-600 text-white rounded-lg transition-colors shadow-sm font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i> Save & Print PO
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script src="app.js"></script>
+    </div> <!-- Close App Container -->
+
+    <!-- Receipt Print Template (Hidden from screen) -->
+    <div id="receipt-print-area" class="hidden">
+        <!-- Will be populated dynamically before printing -->
+    </div>
+</body>
+
+</html>
